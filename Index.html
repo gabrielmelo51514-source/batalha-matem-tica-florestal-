@@ -1,0 +1,609 @@
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070b1c">
+<title>Batalha Matemática | Engenharia Florestal</title>
+
+<style>
+:root{
+ --bg:#070b1c;--card:#101a35;--cyan:#35e7ff;
+ --purple:#a477ff;--green:#55f5bd;--text:#f4f7ff;
+ --muted:#9caccb;--border:#30466f;--danger:#ff647f;
+}
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:16px;color:var(--text);
+ font-family:Inter,system-ui,Arial,sans-serif;
+ background:radial-gradient(ellipse at 15% 5%,#243b85 0%,transparent 38%),
+ radial-gradient(ellipse at 90% 20%,#422477 0%,transparent 35%),var(--bg);
+}
+main{max-width:950px;margin:auto}
+.brand{text-align:center;margin:22px 0 30px}
+.brand h1{font-size:clamp(2rem,7vw,3.5rem);margin:0;color:var(--cyan);
+ text-shadow:0 0 18px #35e7ff88;font-weight:1000}
+.brand p{color:var(--muted);letter-spacing:1px}
+.card{
+ background:linear-gradient(145deg,#142343f5,#0c1630f7);
+ border:1px solid var(--border);border-radius:22px;padding:24px;
+ margin:18px 0;box-shadow:0 18px 45px #0007;
+}
+h2{margin-top:0}
+h3{color:var(--cyan)}
+label{display:block;margin:14px 0 7px;color:#d5e2ff;font-weight:750}
+input,select{
+ width:100%;padding:14px;border-radius:12px;border:1px solid #3b5682;
+ background:#080f24;color:white;font-size:1rem;margin-bottom:12px;
+}
+button{
+ border:0;border-radius:12px;padding:14px 19px;margin:5px;
+ font-weight:850;font-size:1rem;cursor:pointer;
+ color:#071426;background:linear-gradient(110deg,var(--cyan),var(--green));
+}
+button.alt{color:white;background:linear-gradient(110deg,#6954db,var(--purple))}
+button:disabled{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.actions button{flex:1;min-width:145px}
+.hidden{display:none!important}
+.notice{min-height:24px;color:#ffd27a;font-weight:650}
+.good{color:var(--green)}.bad{color:var(--danger)}
+.pin{
+ font-size:clamp(2.2rem,9vw,3.4rem);letter-spacing:9px;
+ color:var(--cyan);font-weight:1000;text-align:center;padding:18px;
+ margin:15px 0;border-radius:16px;border:1px solid #35e7ff55;
+ background:linear-gradient(120deg,#142f50,#202052);
+}
+.player{
+ padding:13px 15px;background:#1a3155;border:1px solid #354e77;
+ border-radius:12px;margin:8px 0;display:flex;justify-content:space-between;
+ align-items:center;gap:10px;
+}
+.player b{color:var(--cyan)}
+.question{
+ font-size:clamp(1.2rem,4vw,1.8rem);font-weight:900;line-height:1.5;
+ padding:22px;margin:20px 0;border:1px solid #526dff66;
+ border-radius:16px;background:linear-gradient(130deg,#172c50,#251c50);
+}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.answers button{
+ min-height:68px;color:white;background:linear-gradient(135deg,#1d365c,#202b50);
+ border:1px solid #526dff88;
+}
+.answers button:disabled{opacity:.65}
+.meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted)}
+#timer{color:var(--cyan);font-size:1.4rem;font-weight:900}
+.bar{height:9px;background:#29425c;border-radius:9px;margin:12px 0 20px;overflow:hidden}
+#timeBar{height:100%;width:100%;background:var(--cyan);transition:width .2s}
+#nextBtn{width:100%;margin-top:16px}
+.avatar-grid{display:flex;gap:8px;flex-wrap:wrap}
+.avatar-option{font-size:1.5rem;background:#172c50;border:1px solid #526dff66}
+.avatar-option.selected{border:2px solid var(--cyan);box-shadow:0 0 15px #35e7ff55}
+footer{text-align:center;color:#8193b8;font-size:.85rem;margin:28px}
+@media(max-width:550px){
+ body{padding:10px}.card{padding:17px}.answers{grid-template-columns:1fr}
+ .actions{flex-direction:column}.actions button{width:100%}
+}
+</style>
+</head>
+
+<body>
+<main>
+<header class="brand">
+ <h1>⚡ BATALHA MATEMÁTICA</h1>
+ <p>ARENA DIGITAL • ENGENHARIA FLORESTAL</p>
+</header>
+
+<section id="home" class="card">
+ <h2>🎮 Entrar na batalha</h2>
+
+ <label>Seu nome</label>
+ <input id="playerName" maxlength="18" placeholder="Digite seu nome">
+
+ <label>Escolha seu avatar</label>
+ <div id="avatarGrid" class="avatar-grid"></div>
+
+ <div class="actions">
+  <button id="createBtn">⚡ Criar sala</button>
+ </div>
+
+ <hr>
+ <label>PIN da sala</label>
+ <input id="pinInput" inputmode="numeric" maxlength="6" placeholder="Ex.: 482193">
+ <button class="alt" id="joinBtn">🚀 Entrar com PIN</button>
+ <p class="notice" id="homeMsg"></p>
+</section>
+
+<section id="lobby" class="card hidden">
+ <h2>🏆 Sala de espera</h2>
+ <p>Compartilhe este PIN com seus amigos:</p>
+ <div class="pin" id="roomPin"></div>
+
+ <p id="lobbyCount"></p>
+ <div id="lobbyPlayers"></div>
+
+ <div id="hostSettings" class="hidden">
+  <hr>
+  <h3>👑 Configurações do anfitrião</h3>
+  <label>Escolha a dificuldade</label>
+  <select id="difficulty">
+   <option value="facil">Fácil</option>
+   <option value="intermediario">Intermediário</option>
+   <option value="avancado">Avançado</option>
+   <option value="muito_dificil">Muito difícil</option>
+  </select>
+  <p class="notice">Somente o anfitrião pode escolher o nível e iniciar.</p>
+  <button id="startBtn">🚀 Começar partida</button>
+ </div>
+
+ <p id="lobbyMsg" class="notice">Aguardando o anfitrião iniciar...</p>
+ <button class="alt" id="leaveBtn">↩ Sair da sala</button>
+</section>
+
+<section id="game" class="card hidden">
+ <div class="meta">
+  <span id="roundInfo">Pergunta 1 de 10</span>
+  <span>⏱ <b id="timer">20</b>s</span>
+ </div>
+ <div class="bar"><div id="timeBar"></div></div>
+ <div class="question" id="questionText"></div>
+ <div class="answers" id="answerButtons"></div>
+ <p id="gameMsg" class="notice"></p>
+
+ <div id="hostPanel" class="hidden">
+  <hr>
+  <h3>👑 Painel exclusivo do anfitrião</h3>
+  <p id="answerCount"></p>
+  <div id="gamePlayers"></div>
+  <button id="nextBtn" disabled>➡ Próxima pergunta</button>
+ </div>
+</section>
+
+<section id="result" class="card hidden">
+ <h2>🏅 Resultado final</h2>
+ <div id="finalRanking"></div>
+ <p id="playerFinalMsg"></p>
+ <button onclick="location.reload()">🏠 Voltar ao início</button>
+</section>
+
+<footer>⚡ BATALHA MATEMÁTICA • PROTÓTIPO EDUCACIONAL</footer>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig={
+ apiKey:"AIzaSyCL9_K_mTVkN_I63v7msjYYQNEzK_gf790",
+ authDomain:"batalha-matematica-florestal.firebaseapp.com",
+ databaseURL:"https://batalha-matematica-florestal-default-rtdb.firebaseio.com",
+ projectId:"batalha-matematica-florestal",
+ storageBucket:"batalha-matematica-florestal.firebasestorage.app",
+ messagingSenderId:"196032274582",
+ appId:"1:196032274582:web:fbd28b037a45ea6685a2b7"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
+const $=id=>document.getElementById(id);
+
+const avatars=["🌲","🌳","🌿","🍃","🦉","🦊","🐺","🦅","🐻","🐸","🐢","🦋"];
+let selectedAvatar=avatars[0];
+let uid=null,pin=null,isHost=false,roomData=null;
+let players={},scores={},answers={},deck=[];
+let answered=false,localTimer=null,remaining=20,lastAdvanced=-1;
+let roomListener=null,playersListener=null,answersListener=null,scoresListener=null;
+
+const question=(q,a,c)=>({q,a,c});
+
+const questionBank={
+facil:[
+ question("Quantos metros quadrados existem em 1 hectare?",["100","1.000","10.000","100.000"],2),
+ question("Uma área retangular mede 20 m por 30 m. Qual é sua área?",["50 m²","100 m²","600 m²","900 m²"],2),
+ question("Quanto é 25% de 200 árvores?",["25","40","50","75"],2),
+ question("Uma distância de 2 km corresponde a quantos metros?",["200","2.000","20.000","200.000"],1),
+ question("Qual é a média de 10, 20 e 30?",["15","20","25","30"],1),
+ question("Um terreno quadrado tem lado de 5 m. Qual é seu perímetro?",["10 m","20 m","25 m","50 m"],1),
+ question("Quanto é 3 × 12?",["15","24","36","42"],2),
+ question("Uma muda custa R$ 2. Quanto custam 15 mudas?",["R$ 17","R$ 25","R$ 30","R$ 35"],2),
+ question("Uma área de 1 hectare tem quantos quilômetros quadrados?",["0,001","0,01","0,1","1"],1),
+ question("Se 100 mudas foram plantadas e 10 não sobreviveram, quantas restaram?",["80","85","90","95"],2)
+],
+intermediario:[
+ question("Uma parcela retangular mede 40 m por 25 m. Qual é sua área em hectares?",["0,01 ha","0,1 ha","1 ha","10 ha"],1),
+ question("Uma escala 1:10.000 indica que 1 cm no mapa representa:",["10 m","100 m","1.000 m","10.000 m"],1),
+ question("Uma amostra tem valores 4, 6, 8 e 10. Qual é a média?",["6","7","8","9"],1),
+ question("Uma função é f(x)=3x+5. Quanto vale f(4)?",["12","15","17","20"],2),
+ question("Um círculo tem raio de 2 m. Qual é sua área aproximada? Use π=3,14.",["6,28 m²","12,56 m²","9,42 m²","4 m²"],1),
+ question("Um terreno tem 200 m de comprimento e 50 m de largura. Qual é o perímetro?",["250 m","400 m","500 m","10.000 m"],2),
+ question("Se 3 trabalhadores plantam 600 mudas igualmente, quantas mudas cada um planta?",["100","150","200","300"],2),
+ question("Em um mapa, 5 cm representam 500 m. Qual é a escala?",["1:1.000","1:5.000","1:10.000","1:50.000"],2),
+ question("Resolva: 2x+8=20.",["4","5","6","8"],2),
+ question("Uma área de 2 ha foi dividida em 4 partes iguais. Cada parte tem:",["0,25 ha","0,5 ha","1 ha","2 ha"],1)
+],
+avancado:[
+ question("Qual é a derivada de f(x)=4x³?",["4x²","8x","12x²","12x³"],2),
+ question("Calcule a integral de 2x dx.",["x²+C","2x²+C","x+C","x³+C"],0),
+ question("Uma função de crescimento é f(t)=t²+3t. Qual é sua taxa instantânea em t=2?",["5","6","7","8"],2),
+ question("Qual é a variância populacional dos valores 2, 4 e 6?",["2","8/3","4","16/3"],2),
+ question("Se log₁₀(1000)=x, qual é x?",["1","2","3","10"],2),
+ question("Qual é a área de um círculo de raio 3 m? Use π=3,14.",["9,42 m²","18,84 m²","28,26 m²","37,68 m²"],2),
+ question("A derivada de f(x)=5x²-3x é:",["10x-3","5x-3","10x+3","5x²"],0),
+ question("Qual é o determinante da matriz [[2,1],[3,4]]?",["5","8","11","14"],0),
+ question("Uma população cresce segundo P(t)=100e^(0,2t). Qual é a taxa relativa de crescimento?",["0,02","0,2","2","100"],1),
+ question("A integral definida de 0 a 2 de 3x² dx vale:",["4","6","8","12"],2)
+],
+muito_dificil:[
+ question("Se f(x)=x² ln(x), para x>0, qual é sua derivada?",["2x ln(x)+x","x²/x","2x+ln(x)","x ln(x)+2"],0),
+ question("Calcule a integral de 0 a 2 de (2x+1) dx.",["4","5","6","8"],2),
+ question("A matriz [[1,2],[3,4]] tem determinante:",["-2","2","5","10"],0),
+ question("Se y'=3y e y(0)=2, qual é a solução?",["2e^(3x)","3e^(2x)","2+3x","e^(3x)"],0),
+ question("Qual é a derivada de f(x)=e^(2x)?",["e^(2x)","2e^(2x)","2xe^(2x)","e^x"],1),
+ question("Uma função tem derivada f'(x)=6x-12. Em qual valor ocorre ponto crítico?",["0","1","2","6"],2),
+ question("A integral de x e^(x²) dx é:",["e^(x²)+C","(1/2)e^(x²)+C","2e^(x²)+C","xe^(x²)+C"],1),
+ question("Se a variância é 25, qual é o desvio padrão?",["2,5","5","10","25"],1),
+ question("Qual é a segunda derivada de f(x)=x⁴?",["4x³","12x²","16x²","24x"],1),
+ question("A probabilidade de dois eventos independentes A e B ocorrerem juntos é:",["P(A)+P(B)","P(A)-P(B)","P(A)×P(B)","P(A)/P(B)"],2)
+]
+};
+
+function show(id){
+ ["home","lobby","game","result"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+}
+function msg(id,text,cls=""){
+ $(id).textContent=text;
+ $(id).className="notice "+cls;
+}
+function esc(s){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function shuffle(a){
+ const b=[...a];
+ for(let i=b.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [b[i],b[j]]=[b[j],b[i]];
+ }
+ return b;
+}
+function randomPin(){
+ return String(Math.floor(100000+Math.random()*900000));
+}
+function cleanName(){
+ return $("playerName").value.trim().slice(0,18);
+}
+async function ensureAuth(){
+ if(!auth.currentUser) await auth.signInAnonymously();
+ uid=auth.currentUser.uid;
+}
+function ref(path){return db.ref(path);}
+function roomRef(){return ref("salas/"+pin);}
+function playersRef(){return ref("jogadores/"+pin);}
+function answersRef(){return ref("respostas/"+pin);}
+function scoresRef(){return ref("placares/"+pin);}
+function secretRef(){return ref("segredo/"+pin);}
+
+function drawAvatars(){
+ $("avatarGrid").innerHTML=avatars.map((a,i)=>
+  `<button type="button" class="avatar-option ${i===0?"selected":""}" data-avatar="${a}">${a}</button>`
+ ).join("");
+ $("avatarGrid").querySelectorAll("button").forEach(b=>{
+  b.onclick=()=>{
+   selectedAvatar=b.dataset.avatar;
+   $("avatarGrid").querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));
+  };
+ });
+}
+
+async function createRoom(){
+ const name=cleanName();
+ if(!name){msg("homeMsg","Digite seu nome primeiro.");return;}
+ try{
+  await ensureAuth();
+  let created=false;
+  for(let i=0;i<8&&!created;i++){
+   pin=randomPin();
+   const initial={
+    host:uid,status:"lobby",difficulty:"facil",
+    index:0,deadline:0,createdAt:Date.now(),
+    currentQuestion:null
+   };
+   const result=await roomRef().transaction(old=>old===null?initial:undefined);
+   created=result.committed;
+  }
+  if(!created)throw new Error("Não foi possível gerar um PIN. Tente novamente.");
+  await playersRef().child(uid).set({name,avatar:selectedAvatar,joinedAt:Date.now()});
+  isHost=true;
+  enterRoom();
+ }catch(e){
+  msg("homeMsg","Erro ao criar sala: "+e.message,"bad");
+ }
+}
+
+async function joinRoom(){
+ const name=cleanName(),p=$("pinInput").value.trim();
+ if(!name){msg("homeMsg","Digite seu nome primeiro.");return;}
+ if(!/^\d{6}$/.test(p)){msg("homeMsg","Digite um PIN de seis números.");return;}
+ try{
+  await ensureAuth();
+  pin=p;
+  const roomSnap=await roomRef().get();
+  if(!roomSnap.exists()){msg("homeMsg","Sala não encontrada.");return;}
+  if(roomSnap.val().status!=="lobby"){msg("homeMsg","Essa partida já começou.");return;}
+  const people=await playersRef().get();
+  const current=people.val()||{};
+  if(!current[uid]&&Object.keys(current).length>=36){
+   msg("homeMsg","A sala já atingiu o limite de 36 jogadores.");return;
+  }
+  await playersRef().child(uid).set({name,avatar:selectedAvatar,joinedAt:Date.now()});
+  isHost=roomSnap.val().host===uid;
+  enterRoom();
+ }catch(e){
+  msg("homeMsg","Erro ao entrar: "+e.message,"bad");
+ }
+}
+
+function enterRoom(){
+ show("lobby");
+ $("roomPin").textContent=pin;
+ $("hostSettings").classList.toggle("hidden",!isHost);
+ $("hostPanel").classList.toggle("hidden",!isHost);
+ listenRoom();
+ listenPlayers();
+ if(isHost){
+  listenAnswers();
+  listenScores();
+ }
+}
+
+function listenRoom(){
+ roomRef().on("value",snap=>{
+  if(!snap.exists()){
+   msg("lobbyMsg","A sala não existe mais.");return;
+  }
+  roomData=snap.val();
+  if($("difficulty"))$("difficulty").value=roomData.difficulty||"facil";
+  if(roomData.status==="playing"){
+   show("game");
+   renderQuestion();
+  }else if(roomData.status==="finished"){
+   renderFinal();
+  }else{
+   show("lobby");
+   $("roomPin").textContent=pin;
+   $("hostSettings").classList.toggle("hidden",!isHost);
+  }
+ });
+}
+
+function listenPlayers(){
+ playersRef().on("value",snap=>{
+  players=snap.val()||{};
+  renderPlayers();
+  renderHostPanel();
+ });
+}
+
+function listenAnswers(){
+ answersRef().on("value",snap=>{
+  answers=snap.val()||{};
+  processAnswers();
+  renderHostPanel();
+ });
+}
+
+function listenScores(){
+ scoresRef().on("value",snap=>{
+  scores=snap.val()||{};
+  renderHostPanel();
+ });
+}
+
+function renderPlayers(){
+ const list=Object.entries(players);
+ $("lobbyCount").textContent=list.length+"/36 jogadores";
+ $("lobbyPlayers").innerHTML=list.map(([id,p])=>
+  `<div class="player"><span>${esc(p.avatar||"🙂")} ${esc(p.name)} ${id===roomData.host?"👑 ANFITRIÃO":""}</span><b>${id===uid?"Você": "Participante"}</b></div>`
+ ).join("");
+}
+
+function renderHostPanel(){
+ if(!isHost||!roomData||roomData.status!=="playing")return;
+ const idx=roomData.index||0;
+ const list=Object.entries(players);
+ const count=list.filter(([id])=>answers[id]&&answers[id][idx]!==undefined).length;
+ $("answerCount").textContent=`${count} de ${list.length} jogadores já responderam.`;
+ $("gamePlayers").innerHTML=list.map(([id,p])=>{
+  const done=answers[id]&&answers[id][idx]!==undefined;
+  const score=scores[id]?.score||0;
+  return `<div class="player"><span>${esc(p.avatar||"🙂")} ${esc(p.name)} ${id===roomData.host?"👑":""}<br><small>${done?"✅ Respondeu":"⏳ Aguardando resposta"}</small></span><b>${score} pts</b></div>`;
+ }).join("");
+ if(count===list.length&&list.length>0){
+  msg("gameMsg","Todos responderam! Somente você, anfitrião, vê esta informação.","good");
+  $("nextBtn").disabled=false;
+ }else{
+  $("nextBtn").disabled=false;
+ }
+}
+
+async function changeDifficulty(){
+ if(!isHost||!roomData||roomData.status!=="lobby")return;
+ try{
+  await roomRef().update({difficulty:$("difficulty").value});
+ }catch(e){
+  msg("lobbyMsg","Não foi possível alterar a dificuldade: "+e.message,"bad");
+ }
+}
+
+async function startGame(){
+ if(!isHost)return;
+ try{
+  const level=$("difficulty").value;
+  deck=shuffle(questionBank[level]).slice(0,10);
+  await secretRef().set({deck,level});
+  const first=deck[0];
+  await scoresRef().set({});
+  await roomRef().update({
+   status:"playing",difficulty:level,index:0,
+   deadline:Date.now()+20000,
+   currentQuestion:{q:first.q,a:first.a}
+  });
+ }catch(e){
+  msg("lobbyMsg","Erro ao iniciar: "+e.message,"bad");
+ }
+}
+
+async function loadDeck(){
+ if(deck.length)return;
+ const snap=await secretRef().get();
+ if(snap.exists())deck=snap.val().deck||[];
+}
+
+async function renderQuestion(){
+ if(!roomData||roomData.status!=="playing")return;
+ const idx=roomData.index||0;
+ const q=roomData.currentQuestion;
+ if(!q)return;
+ $("roundInfo").textContent=`Pergunta ${idx+1} de 10`;
+ $("questionText").textContent=q.q;
+ $("answerButtons").innerHTML=q.a.map((a,i)=>
+  `<button data-choice="${i}">${esc(a)}</button>`
+ ).join("");
+ answered=false;
+ const old=await ref(`respostas/${pin}/${uid}/${idx}`).get();
+ if(old.exists())answered=true;
+ $("answerButtons").querySelectorAll("button").forEach(b=>{
+  b.disabled=answered;
+  b.onclick=()=>sendAnswer(Number(b.dataset.choice));
+ });
+ if(answered)msg("gameMsg","Sua resposta foi registrada. Aguarde.","good");
+ else msg("gameMsg","Escolha uma alternativa.");
+ $("hostPanel").classList.toggle("hidden",!isHost);
+ if(isHost){
+  $("nextBtn").disabled=true;
+  await loadDeck();
+  renderHostPanel();
+ }
+ startTimer(roomData.deadline||Date.now()+20000);
+}
+
+async function sendAnswer(choice){
+ if(answered||!roomData||roomData.status!=="playing")return;
+ answered=true;
+ $("answerButtons").querySelectorAll("button").forEach(b=>b.disabled=true);
+ try{
+  const idx=roomData.index||0;
+  await ref(`respostas/${pin}/${uid}/${idx}`).set({
+   choice,at:Date.now()
+  });
+  msg("gameMsg","Resposta registrada! Aguarde a próxima pergunta.","good");
+ }catch(e){
+  answered=false;
+  msg("gameMsg","Erro ao enviar resposta: "+e.message,"bad");
+ }
+}
+
+async function processAnswers(){
+ if(!isHost||!roomData||roomData.status!=="playing")return;
+ await loadDeck();
+ const idx=roomData.index||0;
+ const q=deck[idx];
+ if(!q)return;
+ for(const [playerId,byQuestion] of Object.entries(answers)){
+  const answer=byQuestion&&byQuestion[idx];
+  if(!answer||typeof answer.choice!=="number")continue;
+  const scoreRef=ref(`placares/${pin}/${playerId}`);
+  await scoreRef.transaction(current=>{
+   current=current||{score:0,streak:0,processed:{}};
+   current.processed=current.processed||{};
+   if(current.processed[idx])return;
+   if(answer.choice===q.c){
+    current.streak=(current.streak||0)+1;
+    current.score=(current.score||0)+10+(current.streak%3===0?5:0);
+   }else{
+    current.streak=0;
+   }
+   current.processed[idx]=true;
+   return current;
+  });
+ }
+ renderHostPanel();
+}
+
+function startTimer(deadline){
+ clearInterval(localTimer);
+ function tick(){
+  remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+  $("timer").textContent=remaining;
+  $("timeBar").style.width=(remaining/20*100)+"%";
+  if(remaining<=0){
+   clearInterval(localTimer);
+   if(isHost)advance();
+  }
+ }
+ tick();
+ localTimer=setInterval(tick,250);
+}
+
+async function advance(){
+ if(!isHost||!roomData)return;
+ const current=roomData.index||0;
+ if(lastAdvanced===current)return;
+ lastAdvanced=current;
+ try{
+  const next=current+1;
+  if(next>=10){
+   await roomRef().update({status:"finished"});
+   return;
+  }
+  const q=deck[next];
+  if(!q)throw new Error("Pergunta não encontrada.");
+  await roomRef().update({
+   index:next,deadline:Date.now()+20000,
+   currentQuestion:{q:q.q,a:q.a}
+  });
+ }catch(e){
+  lastAdvanced=-1;
+  msg("gameMsg","Erro ao avançar: "+e.message,"bad");
+ }
+}
+
+function renderFinal(){
+ clearInterval(localTimer);
+ show("result");
+ if(isHost){
+  const ranking=Object.entries(players).map(([id,p])=>({
+   ...p,score:scores[id]?.score||0
+  })).sort((a,b)=>b.score-a.score);
+  $("finalRanking").innerHTML=ranking.map((p,i)=>
+   `<div class="player"><span>${["🥇","🥈","🥉"][i]||`${i+1}.`} ${esc(p.avatar||"🙂")} ${esc(p.name)}</span><b>${p.score} pts</b></div>`
+  ).join("");
+  $("playerFinalMsg").textContent="Classificação completa visível somente para o anfitrião.";
+ }else{
+  $("finalRanking").innerHTML="";
+  $("playerFinalMsg").textContent="🏁 Partida encerrada! Aguarde o anfitrião divulgar o resultado.";
+ }
+}
+
+async function leaveRoom(){
+ clearInterval(localTimer);
+ try{
+  if(pin&&uid)await playersRef().child(uid).remove();
+  if(isHost&&roomData)await roomRef().update({status:"finished"});
+ }catch(e){}
+ location.reload();
+}
+
+$("createBtn").onclick=createRoom;
+$("joinBtn").onclick=joinRoom;
+$("startBtn").onclick=startGame;
+$("nextBtn").onclick=advance;
+$("leaveBtn").onclick=leaveRoom;
+$("difficulty").onchange=changeDifficulty;
+
+drawAvatars();
+</script>
+</body>
+</html>

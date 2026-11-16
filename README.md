@@ -1,1 +1,0 @@
-# batalha-matem-tica-florestal-
